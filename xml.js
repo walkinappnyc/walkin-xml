@@ -13,12 +13,12 @@ request('https://goldfarbproperties.com/feeds/streeteasy.xml', function (err, re
 
 	let xml = body
 	parseString(xml, function (err, result) {
-    	console.dir(result);
-    	console.log(JSON.stringify(result))
+    	// console.dir(result);
+
     	let dataJSON = JSON.stringify(result)
-    	console.log(result.streeteasy)
-    	console.log(result.streeteasy.properties)
-    	console.log(result.streeteasy.properties[0])
+    	// console.log(result.streeteasy)
+    	// console.log(result.streeteasy.properties)
+    	// console.log(result.streeteasy.properties[0])
 
 
     	result.streeteasy.properties[0].property.forEach(item => {
@@ -68,12 +68,11 @@ request('https://goldfarbproperties.com/feeds/streeteasy.xml', function (err, re
 	    		json: true,
 	    		body: template
     		}
-    		console.log(item)
+    		// console.log(item)
     		console.log(item.details)
 
     		request(options, function(err, res, body) {
     			// console.log(JSON.stringify(item.details))
-    			console.log('working');
     			console.log(body)
     		})
     	})
