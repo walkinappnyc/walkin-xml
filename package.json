@@ -5,7 +5,7 @@
   "main": "xml.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node xml.js",
+    "start": "node xml.js"
   },
   "author": "",
   "license": "ISC",
