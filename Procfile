@@ -1,1 +1,1 @@
-web: node xml.js
+worker: node xml.js

@@ -4,6 +4,7 @@ const parseString = require('xml2js').parseString
 const request = require('request')
 const fs = require('fs')
 const XmlStream = require('xml-stream')
+const dateTime = require('date-time')
 
 request('https://goldfarbproperties.com/feeds/streeteasy.xml', function (err, res, body) {
 	console.log('error:', err)
@@ -53,6 +54,7 @@ request('https://goldfarbproperties.com/feeds/streeteasy.xml', function (err, re
 				  "floorplanId": 0
 			}
 
+			template.updated_at = dateTime()
 			template.body = item.details[0].description[0]
 			template.price = item.details[0].price[0]
 			template.bedrooms = item.details[0].bedrooms[0]
