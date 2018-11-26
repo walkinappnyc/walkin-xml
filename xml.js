@@ -23,6 +23,50 @@ request('https://goldfarbproperties.com/feeds/streeteasy.xml', function (err, re
 
     	result.streeteasy.properties[0].property.forEach(item => {
     		// console.log(`++++++++++++ ${JSON.stringify(item)} ++++++++++++`)
+
+    		let photoArray = item.media[0].photo
+			// console.log(JSON.stringify(photoArray))
+
+			let parsedMedia = []
+
+			photoArray.forEach(photo => {
+				let tempObj = {}
+				tempObj["type"] = "photo"
+				// console.log(tempObj)
+				tempObj["url"] = photo.$.url
+				tempObj["description"] = photo.$.description
+				tempObj["position"] = photo.$.position
+				parsedMedia.push(tempObj)
+				// console.log(parsedPhotos)
+				return parsedMedia
+			})
+
+			let floorplanArray = item.media[0].floorplan || null
+
+			// console.log(JSON.stringify(floorplanArray))
+
+			// let parsedFloorplans = []
+
+			if (floorplanArray != null) {
+				floorplanArray.forEach(floorplan => {
+					let tempObj = {}
+					tempObj["type"] = "floorplan"
+					// console.log(tempObj)
+					tempObj["url"] = floorplan.$.url
+					tempObj["description"] = floorplan.$.description
+					tempObj["position"] = null
+					parsedMedia.push(tempObj)
+					// console.log(parsedFloorplans)
+					return parsedMedia
+				})
+			}
+
+			// let mediaArray = []
+
+			// mediaArray.push(photoArray)
+			// mediaArray.push(floorplanArray)
+			console.log(JSON.stringify(parsedMedia))
+
     		let template = {
 			  "xml_id":"defined in xml feed as id",
 			  "yardi_code":"not defined in xml but a field on a lot of their tables - could be useful might be the db name for id",
@@ -140,8 +184,22 @@ request('https://goldfarbproperties.com/feeds/streeteasy.xml', function (err, re
 				"total_rooms": `${item.details[0].totalrooms[0]}`
 			}
 			template.open_houses = item.openHouses
-			template.media = item.media
+			template.media = parsedMedia
 			template.updated_at = dateTime()
+
+			// console.log(JSON.stringify(item.media[0].photo))
+
+			// let photoArray = item.media[0].photo
+			// console.log(JSON.stringify(photoArray))
+
+			// let parsedPhotos = []
+
+			// photoArray.forEach(photo => {
+			// 	parsedPhotos.push(photo.$)
+			// 	console.log(parsedPhotos)
+			// 	return parsedPhotos
+			// })
+
 
     		let options = {
 	    		url: 'https://walkin-staging.herokuapp.com/api/Properties',
