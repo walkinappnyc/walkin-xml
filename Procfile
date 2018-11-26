@@ -1,1 +1,1 @@
-workerit ad: node xml.js
+worker: node xml.js
