@@ -24,6 +24,7 @@ function getXMLFeeds() {
 		let urlArr = []
 		// console.log(urlArr)
 		body.forEach(item => {
+			console.log(`${item}`)
 			urlArr.push(item.xml_feed_url)
 			// console.log(`${urlArrsa}`)
 			return urlArr
@@ -35,9 +36,9 @@ function getXMLFeeds() {
 getXMLFeeds()
 
 function createProperties(xml_feeds) {
-	console.log(`${JSON.stringify(xml_feeds)}`)
+	console.log(`this is the array ${JSON.stringify(xml_feeds)}`)
 	xml_feeds.forEach(feed => {
-		console.log(`${feed}`)
+		console.log(`this is new feed ${feed}`)
 		let item = feed
 		request(`${item}`, function (err, res, body) {
 			// console.log('error:', err)
@@ -55,30 +56,57 @@ function createProperties(xml_feeds) {
 
 
 	    	result.streeteasy.properties[0].property.forEach(item => {
-	    		// console.log(`++++++++++++ ${JSON.stringify(item)} ++++++++++++`)
+	    		console.log(`++++++++++++ ${JSON.stringify(item)} ++++++++++++`)
 
-	    		let photoArray = item.media[0].photo
+	    		let {
+	    			$,
+	    			location,
+	    			details,
+	    			openHouses,
+	    			agents,
+	    			media
+	    		} = item
+
+	    		let data = {
+	    			$,
+	    			location,
+	    			details,
+	    			openHouses,
+	    			agents,
+	    			media
+	    		}
+
+	    		// console.log(`**** ${JSON.stringify(data)} ***`)
+	    		console.log(`**** ${JSON.stringify($)} ***`)
+	    		console.log(`**** ${JSON.stringify(location)} ***`)
+	    		console.log(`**** ${JSON.stringify(details)} ***`)
+	    		console.log(`**** ${JSON.stringify(openHouses)} ***`)
+	    		console.log(`**** ${JSON.stringify(agents)} ***`)
+	    		console.log(`**** ${JSON.stringify(media)} ***`)
+
+	    		let photoArray = media[0].photo || null
 				// console.log(JSON.stringify(photoArray))
 
 				let parsedMedia = []
 
-				photoArray.forEach(photo => {
-					let tempObj = {}
-					tempObj["type"] = "photo"
-					// console.log(tempObj)
-					tempObj["url"] = photo.$.url
-					tempObj["description"] = photo.$.description
-					tempObj["position"] = photo.$.position
-					parsedMedia.push(tempObj)
-					// console.log(parsedPhotos)
-					return parsedMedia
-				})
+				if (photoArray != null) {
+					photoArray.forEach(photo => {
+						let tempObj = {}
+						tempObj["type"] = "photo"
+						// console.log(tempObj)
+						tempObj["url"] = photo.$.url
+						tempObj["description"] = photo.$.description
+						tempObj["position"] = photo.$.position
+						parsedMedia.push(tempObj)
+						// console.log(parsedPhotos)
+						return parsedMedia
+					})
+				}
 
-				let floorplanArray = item.media[0].floorplan || null
+
+				let floorplanArray = media[0].floorplan || null
 
 				// console.log(JSON.stringify(floorplanArray))
-
-				// let parsedFloorplans = []
 
 				if (floorplanArray != null) {
 					floorplanArray.forEach(floorplan => {
@@ -101,20 +129,12 @@ function createProperties(xml_feeds) {
 				// console.log(JSON.stringify(parsedMedia))
 
 	    		let template = {
-				  "xml_id":"defined in xml feed as id",
-				  "yardi_code":"not defined in xml but a field on a lot of their tables - could be useful might be the db name for id",
+				  "xml_id":"",
 				  "landlord":{
 				    "name":"Michael Angelo",
 				    "company":"MOOKIE.INC"
 				  },
-				  "location":{
-				    "address":"315 West 57th Street",
-				    "apartment":"09B",
-				    "city":"New York",
-				    "state":"NY",
-				    "zipcode":"11109",
-				    "neighborhood":"Columbus Circle"
-				  },
+				  "location":{},
 				  "contact":{
 				    "contact_email":"mookie@gmail.com",
 				    "apply_url":"mookie@gmail.com",
@@ -157,66 +177,56 @@ function createProperties(xml_feeds) {
 				      "buses":"CSV"
 				    }
 				  },
-				  "open_houses":[
-				    {
-				      "starts_at":"2018-11-25 9:00am",
-				      "ends_at":"2018-11-25 6:00pm"
-				    }
-				  ],
-				  "media":[
-				    {
-				      "type":"photo",
-				      "url":"https://goldfarbproperties.com/uploads/_styles/carousel-slide/building/315-10g-kitchen.JPG",
-				      "description":"315-10G Kitchen",
-				      "position":"0"
-				    },
-				    {
-				      "type":"floorplan",
-				      "url":"https://goldfarbproperties.com/uploads/_styles/carousel-slide/building/315-10g-kitchen.JPG",
-				      "description":"315-10G Kitchen",
-				      "position":null
-				    }
-				  ]
+				  "open_houses":[],
+				  "media":[]
 				}
 
 
-				template.xml_id = item.$.id
+				template.xml_id = $.id
 				template.location = {
-					"address": `${item.location[0].address[0]}`,
-					"apartment": `${item.location[0].apartment[0]}`,
-					"city": `${item.location[0].city[0]}`,
-					"state": `${item.location[0].state[0]}`,
-					"zipcode": `${item.location[0].zipcode[0]}`,
-					"neighborhood": `${item.location[0].neighborhood[0]}`
+					"address": `${location[0].address[0]}`,
+					"apartment": `${location[0].apartment[0]}`,
+					"city": `${location[0].city[0]}`,
+					"state": `${location[0].state[0]}`,
+					"zipcode": `${location[0].zipcode[0]}`,
+					"neighborhood": `${location[0].neighborhood[0]}`
 				}
 				template.agents = [ 
 					{
-						"name": `${item.agents[0].agent[0].name[0]}`,
-						"company": `${item.agents[0].agent[0].company[0]}`,
-						"email": `${item.agents[0].agent[0].email[0]}`,
-						"phone_number": `${item.agents[0].agent[0].phone_numbers[0].main[0]}`
+						"name": `${agents[0].agent[0].name[0]}`,
+						"company": `${agents[0].agent[0].company[0]}`,
+						"email": `${agents[0].agent[0].email[0]}`,
+						"phone_number": `${agents[0].agent[0].phone_numbers[0].main[0]}`
 					}
 				]
-				console.log(item)
+				// console.log(item)
+
 				template.details = {
 					"amenities": {
-						"highlights": "test",
-						"unit": "test",
-						"building": "null",
-						"other": `${item.details[0].amenities[0].other[0]}`
+						"highlights": [`${details[0].amenities[0]}`],
+						"unit": [`${details[0].amenities[0].dishwasher}`],
+						"building": [`${details[0].amenities[0].elevator}`, 
+							`${details[0].amenities[0].gym}`,
+							`${details[0].amenities[0].storage}`
+						],
+						"other": `${details[0].amenities[0].other[0]}`
 					},
-					"bathrooms": `${item.details[0].bathrooms[0]}`,
-					"bedrooms": `${item.details[0].bedrooms[0]}`,
+					"bathrooms": `${details[0].bathrooms[0]}`,
+					"bedrooms": `${details[0].bedrooms[0]}`,
 					"building": {
-						"description": `${item.details[0].description[0]}`
+						"description": [`${details[0].description[0].unit}`,
+							`${details[0].description[0].building}`
+						]
 					},
-					"half_baths": `${item.details[0].half_baths[0]}`,
-					"no_fee": `${item.details[0].noFee[0]}`,
-					"price": `${item.details[0].price[0]}`,
-					"property_type": `${item.details[0].propertyType[0]}`,
-					"total_rooms": `${item.details[0].totalrooms[0]}`
+					"half_baths": `${details[0].half_baths[0]}`,
+					"no_fee": `${details[0].noFee[0]}`,
+					"price": `${details[0].price[0]}`,
+					"property_type": `${details[0].propertyType[0]}`,
+					"total_rooms": `${details[0].totalrooms[0]}`,
+					"special_offers": `{${details[0].incentives[0]}}`,
+					"transportation": `{${details[0].transportation[0]}}`
 				}
-				template.open_houses = item.openHouses
+				template.open_houses = openHouses
 				template.media = parsedMedia
 				template.updated_at = dateTime()
 
