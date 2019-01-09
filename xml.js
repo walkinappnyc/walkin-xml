@@ -3,11 +3,10 @@
 const parseString = require('xml2js').parseString
 const request = require('request')
 const fs = require('fs')
-const XmlStream = require('xml-stream')
 const dateTime = require('date-time')
 
 
-const XMLUrl = `https://walkin-staging.herokuapp.com/api/Landlords`
+const XMLUrl = `http://localhost:3002/api/Landlords`
 
 
 function getXMLFeeds() {
@@ -21,25 +20,20 @@ function getXMLFeeds() {
 	}
 
 	const data = request(options, function(err, res, body) {
-		let urlArr = []
-		// console.log(urlArr)
-		body.forEach(item => {
-			console.log(`${item}`)
-			urlArr.push(item.xml_feed_url)
-			// console.log(`${urlArrsa}`)
-			return urlArr
-		})
-		createProperties(urlArr)
+		console.log(JSON.stringify(body))
+		createProperties(body)
 	})
 }
 
 getXMLFeeds()
 
 function createProperties(xml_feeds) {
-	console.log(`this is the array ${JSON.stringify(xml_feeds)}`)
+	console.log(`array: ${JSON.stringify(xml_feeds)}`)
 	xml_feeds.forEach(feed => {
-		console.log(`this is new feed ${feed}`)
-		let item = feed
+		console.log(`feed: ${feed}`)
+		let item = feed.xml_feed_url
+		console.log(feed.id)
+		console.log(feed.company)
 		request(`${item}`, function (err, res, body) {
 			// console.log('error:', err)
 			// console.log('statusCode:', res && res.statusCode)
@@ -47,7 +41,7 @@ function createProperties(xml_feeds) {
 
 		let xml = body
 		parseString(xml, function (err, result) {
-	    	// console.dir(result)
+	    	console.dir(result)
 
 	    	let dataJSON = JSON.stringify(result)
 	    	// console.log(result.streeteasy)
@@ -56,7 +50,7 @@ function createProperties(xml_feeds) {
 
 
 	    	result.streeteasy.properties[0].property.forEach(item => {
-	    		console.log(`++++++++++++ ${JSON.stringify(item)} ++++++++++++`)
+	    		// console.log(`++++++++++++ ${JSON.stringify(item)} ++++++++++++`)
 
 	    		let {
 	    			$,
@@ -76,7 +70,6 @@ function createProperties(xml_feeds) {
 	    			media
 	    		}
 
-	    		// console.log(`**** ${JSON.stringify(data)} ***`)
 	    		console.log(`**** ${JSON.stringify($)} ***`)
 	    		console.log(`**** ${JSON.stringify(location)} ***`)
 	    		console.log(`**** ${JSON.stringify(details)} ***`)
@@ -93,12 +86,12 @@ function createProperties(xml_feeds) {
 					photoArray.forEach(photo => {
 						let tempObj = {}
 						tempObj["type"] = "photo"
-						// console.log(tempObj)
+
 						tempObj["url"] = photo.$.url
 						tempObj["description"] = photo.$.description
 						tempObj["position"] = photo.$.position
 						parsedMedia.push(tempObj)
-						// console.log(parsedPhotos)
+
 						return parsedMedia
 					})
 				}
@@ -112,21 +105,14 @@ function createProperties(xml_feeds) {
 					floorplanArray.forEach(floorplan => {
 						let tempObj = {}
 						tempObj["type"] = "floorplan"
-						// console.log(tempObj)
 						tempObj["url"] = floorplan.$.url
 						tempObj["description"] = floorplan.$.description
 						tempObj["position"] = null
 						parsedMedia.push(tempObj)
-						// console.log(parsedFloorplans)
+
 						return parsedMedia
 					})
 				}
-
-				// let mediaArray = []
-
-				// mediaArray.push(photoArray)
-				// mediaArray.push(floorplanArray)
-				// console.log(JSON.stringify(parsedMedia))
 
 	    		let template = {
 				  "xml_id":"",
@@ -199,53 +185,49 @@ function createProperties(xml_feeds) {
 						"phone_number": `${agents[0].agent[0].phone_numbers[0].main[0]}`
 					}
 				]
-				// console.log(item)
+				template.contact = {
+					"contact_email": `${agents[0].agent[0].email[0]}`,
+					"apply_url": `${$.url}`,
+					"phone_number": `${agents[0].agent[0].phone_numbers[0].main[0]}`
+				}
+				template.landlord = {
+					"name": `${feed.company}`,
+					"company": `${feed.company}`
+				}
+					
+					// console.log(`${details[0].description[0].unit} ***`)
+					// console.log(`${details[0].description[0].building}`)
 
 				template.details = {
 					"amenities": {
-						"highlights": [`${details[0].amenities[0]}`],
-						"unit": [`${details[0].amenities[0].dishwasher}`],
-						"building": [`${details[0].amenities[0].elevator}`, 
-							`${details[0].amenities[0].gym}`,
-							`${details[0].amenities[0].storage}`
-						],
+						"highlights": `${JSON.stringify(details[0].amenities[0])}`,
 						"other": `${details[0].amenities[0].other[0]}`
 					},
 					"bathrooms": `${details[0].bathrooms[0]}`,
 					"bedrooms": `${details[0].bedrooms[0]}`,
 					"building": {
-						"description": [`${details[0].description[0].unit}`,
-							`${details[0].description[0].building}`
-						]
+						"description": {
+							"unit": `${details[0].description[0].unit}`,
+							"building": `${details[0].description[0].building}`
+						}
 					},
 					"half_baths": `${details[0].half_baths[0]}`,
 					"no_fee": `${details[0].noFee[0]}`,
 					"price": `${details[0].price[0]}`,
 					"property_type": `${details[0].propertyType[0]}`,
-					"total_rooms": `${details[0].totalrooms[0]}`,
-					"special_offers": `{${details[0].incentives[0]}}`,
-					"transportation": `{${details[0].transportation[0]}}`
+					"total_rooms": `${details[0].totalrooms[0]}`
+					// "special_offers": `{${details[0].incentives[0]}}`,
+					// "transportation": `{${details[0].transportation[0]}}`
 				}
 				template.open_houses = openHouses
 				template.media = parsedMedia
+				template.landlordId = feed.id
+				template.isActive = feed.isActive
 				template.updated_at = dateTime()
-
-				// console.log(JSON.stringify(item.media[0].photo))
-
-				// let photoArray = item.media[0].photo
-				// console.log(JSON.stringify(photoArray))
-
-				// let parsedPhotos = []
-
-				// photoArray.forEach(photo => {
-				// 	parsedPhotos.push(photo.$)
-				// 	console.log(parsedPhotos)
-				// 	return parsedPhotos
-				// })
 
 
 	    		let options = {
-		    		url: 'https://walkin-staging.herokuapp.com/api/Properties',
+						url: 'http://localhost:3002/api/Properties',
 		    		method: 'POST',
 		    		headers: {
 		    			'Accept': 'application/JSON'
